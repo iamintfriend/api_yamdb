@@ -13,7 +13,7 @@ class User(AbstractUser):
 
     email = models.EmailField('Почта', unique=True)
     role = models.CharField(
-        'Роль', choices=ROLE_CHOICES, default='user', max_length=8
+        'Роль', choices=ROLE_CHOICES, default='user', max_length=10,
     )
     bio = models.TextField('Биография', blank=True, max_length=300)
 
