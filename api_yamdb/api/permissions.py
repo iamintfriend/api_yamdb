@@ -1,6 +1,13 @@
 from rest_framework import permissions
 
 
+def get_user_role(user):
+    """Функция возвращает роль пользователя или False для анонима."""
+    if user.is_authenticated:
+        return user.role
+    return False
+
+
 class IsStaffOrReadOnly(permissions.BasePermission):
     """
     Администратору и суперпользователю можно редактировать.
@@ -12,7 +19,7 @@ class IsStaffOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        if request.user.is_superuser or request.user.role == 'admin':
+        if request.user.is_superuser or get_user_role(request.user) == 'admin':
             return True
 
 
@@ -38,7 +45,7 @@ class IsOwnerStaffEditAuthPostOrReadOnly(permissions.BasePermission):
         if request.user.is_superuser:
             return True
 
-        if request.user.role == 'moderator' or request.user.role == 'admin':
+        if get_user_role(request.user) == 'moderator' or get_user_role(request.user) == 'admin':
             return True
 
         if request.user == obj.author:
