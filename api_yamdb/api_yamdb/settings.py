@@ -132,4 +132,4 @@ SIMPLE_JWT = {
 }
 
 # время действия для confirmation_code
-PASSWORD_RESET_TIMEOUT_DAYS = 7
+PASSWORD_RESET_TIMEOUT_DAYS = 10
