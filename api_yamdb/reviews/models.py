@@ -120,12 +120,14 @@ class Review(models.Model):
         ordering = ('-pub_date',)  # Пока такое упорядочивание
         verbose_name = 'отзыв'
         verbose_name_plural = 'отзывы'
-        # constraints = [
-        #     models.UniqueConstraint(fields=['title', 'author'], name='unique review')
-        # ]
+        constraints = [
+            models.UniqueConstraint(fields=['title', 'author'], name='unique review')
+        ]
+        # unique_together = ['title', 'author']
 
     def __str__(self):
         return self.text[:15]
+
 
 
 class Comment(models.Model):
