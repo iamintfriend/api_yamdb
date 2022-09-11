@@ -5,7 +5,6 @@ from .views import (CategoryViewSet, CommentViewSet, CurrentUserView,
                     GenreViewSet, ObtainTokenView, RegisterUserView,
                     ReviewViewSet, TitlesViewSet, UserManagementViewSet)
 
-
 router_v1 = DefaultRouter()
 router_v1.register('users', UserManagementViewSet)
 router_v1.register(

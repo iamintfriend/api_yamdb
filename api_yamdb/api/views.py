@@ -13,13 +13,12 @@ from api.mixins import CustomViewSet
 from api.permissions import (IsAdminOrSuperuser,
                              IsOwnerStaffEditAuthPostOrReadOnly,
                              IsStaffOrReadOnly)
-
 from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, NewUserSerializer,
                              ReviewSerializer, TitlesReadSerializer,
-                             TitlesSerializer, TokenRequestSerializer,
-                             User, UserInfoSerializer,
-                             UserSerializer, conf_code_generator)
+                             TitlesSerializer, TokenRequestSerializer, User,
+                             UserInfoSerializer, UserSerializer,
+                             conf_code_generator)
 
 
 class RegisterUserView(generics.CreateAPIView):
@@ -101,7 +100,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
         #     author=self.request.user,
         #     title=self.get_title()
         # ).exists:
-        #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #     return Response(serializer.errors,
+        # status=status.HTTP_400_BAD_REQUEST)
         serializer.save(
             author=self.request.user, title=self.get_title()
         )

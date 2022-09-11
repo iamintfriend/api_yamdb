@@ -118,7 +118,8 @@ class ReviewSerializer(serializers.ModelSerializer):
         #     UniqueTogetherValidator(
         #         queryset=Review.objects.all(),
         #         fields=['title_id', 'author'],
-        #         message='На одно произведение пользователь может оставить один отзыв!'
+        #         message='На одно произведение
+        # пользователь может оставить один отзыв!'
         #     )
         # ]
         read_only_fields = ('pub_date',)

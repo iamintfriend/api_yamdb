@@ -1,8 +1,7 @@
 from django.db import models
-
-from .utils import year_validation
 from users.models import User
 
+from .utils import year_validation
 
 SCORE_CHOICES = [
     (1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5'),
@@ -121,13 +120,14 @@ class Review(models.Model):
         verbose_name = 'отзыв'
         verbose_name_plural = 'отзывы'
         constraints = [
-            models.UniqueConstraint(fields=['title', 'author'], name='unique review')
+            models.UniqueConstraint(
+                fields=['title', 'author'], name='unique review'
+            )
         ]
         # unique_together = ['title', 'author']
 
     def __str__(self):
         return self.text[:15]
-
 
 
 class Comment(models.Model):
