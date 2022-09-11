@@ -1,10 +1,13 @@
-from email.mime import base
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import CommentViewSet, ReviewViewSet, GenreViewSet, TitlesViewSet, CategoryViewSet
+from .views import (CategoryViewSet, CommentViewSet, CurrentUserView,
+                    GenreViewSet, ObtainTokenView, RegisterUserView,
+                    ReviewViewSet, TitlesViewSet, UserManagementViewSet)
+
 
 router_v1 = DefaultRouter()
+router_v1.register('users', UserManagementViewSet)
 router_v1.register(
     r'titles/(?P<title_id>\d+)/reviews',
     ReviewViewSet, basename='reviews'
@@ -25,5 +28,8 @@ router_v1.register(
 
 
 urlpatterns = [
+    path('auth/signup/', RegisterUserView.as_view()),
+    path('auth/token/', ObtainTokenView.as_view()),
+    path('users/me/', CurrentUserView.as_view()),
     path('', include(router_v1.urls)),
 ]

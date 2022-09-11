@@ -1,11 +1,19 @@
 from rest_framework import permissions
 
 
-def get_user_role(user):
-    """Функция возвращает роль пользователя или False для анонима."""
-    if user.is_authenticated:
-        return user.role
+def get_user_role(request):
+    """Функция возвращает роль текущего пользователя или False для анонима."""
+    if request.user.is_authenticated:
+        return request.user.role
+
     return False
+
+
+class IsAdminOrSuperuser(permissions.BasePermission):
+    """У пользователя есть роль admin или он суперпользователь."""
+
+    def has_permission(self, request, view):
+        return request.user.is_superuser or get_user_role(request) == 'admin'
 
 
 class IsStaffOrReadOnly(permissions.BasePermission):
@@ -19,7 +27,7 @@ class IsStaffOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        if request.user.is_superuser or get_user_role(request.user) == 'admin':
+        if request.user.is_superuser or get_user_role(request) == 'admin':
             return True
 
 
@@ -35,17 +43,14 @@ class IsOwnerStaffEditAuthPostOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        # if request.method == 'POST':
         return request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        if request.user.is_superuser:
-            return True
-
-        if get_user_role(request.user) == 'moderator' or get_user_role(request.user) == 'admin':
+        if request.user.is_superuser or (
+                get_user_role(request) in ('moderator', 'admin')):
             return True
 
         if request.user == obj.author:
