@@ -64,6 +64,7 @@ class Title(models.Model):
     )
     genre = models.ManyToManyField(
         Genre,
+        through='GenreTitle',
         verbose_name='Жанр'
     )
     category = models.ForeignKey(
@@ -73,14 +74,25 @@ class Title(models.Model):
         related_name='titles',
         null=True
     )
-    rating = models.IntegerField(
-        verbose_name='Рейтинг',
-        null=True,
-        default=None
-    )
+    # rating = models.IntegerField(
+    #     verbose_name='Рейтинг',
+    #     null=True,
+    #     default=None
+    # )
+
+    class Meta:
+        ordering = ('name',)
 
     def __str__(self):
         return self.name
+
+
+class GenreTitle(models.Model):
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.genre} {self.title}'
 
 
 class Review(models.Model):
@@ -108,6 +120,9 @@ class Review(models.Model):
         ordering = ('-pub_date',)  # Пока такое упорядочивание
         verbose_name = 'отзыв'
         verbose_name_plural = 'отзывы'
+        # constraints = [
+        #     models.UniqueConstraint(fields=['title', 'author'], name='unique review')
+        # ]
 
     def __str__(self):
         return self.text[:15]

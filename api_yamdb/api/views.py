@@ -1,13 +1,13 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets
+from rest_framework import viewsets, filters, status
+from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from api.permissions import IsOwnerStaffEditAuthPostOrReadOnly, IsStaffOrReadOnly
-import django_filters.rest_framework
-from django.db.models import Avg
+# from django.db.models import Avg
 
 from reviews.models import Review, Title, Category, Genre
 from .serializers import CommentSerializer, ReviewSerializer, CategorySerializer, GenreSerializer, TitlesSerializer
-# from .permissions import smth
 from api.mixins import CustomViewSet
 
 
@@ -24,6 +24,11 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return self.get_title().reviews.all()
 
     def perform_create(self, serializer):
+        # if Review.objects.filter(
+        #     author=self.request.user,
+        #     title=self.get_title()
+        # ).exists:
+        #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.save(
             author=self.request.user, title=self.get_title()
         )
@@ -52,9 +57,10 @@ class CategoryViewSet(CustomViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (IsStaffOrReadOnly,)
-    filter_backends = [django_filters.rest_framework.DjangoFilterBackend,]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ("name",)
     lookup_field = "slug"
+    pagination_class = PageNumberPagination
 
 
 class GenreViewSet(CustomViewSet):
@@ -62,16 +68,15 @@ class GenreViewSet(CustomViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (IsStaffOrReadOnly,)
-    filter_backends = [django_filters.rest_framework.DjangoFilterBackend,]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ("name",)
     lookup_field = "slug"
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
     """Вьюсет для модели Title."""
-    queryset = Title.objects.all().annotate(
-        Avg("reviews__score")
-    ).order_by("name")
+    queryset = Title.objects.all()
     serializer_class = TitlesSerializer
     permission_classes = (IsStaffOrReadOnly,)
-    filter_backends = [django_filters.rest_framework.DjangoFilterBackend,]
+    filter_backends = [DjangoFilterBackend, ]
+    pagination_class = PageNumberPagination
