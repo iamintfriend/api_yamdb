@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
+from django.db.models import Avg
 
 from reviews.models import Comment, Review, Title, Category, Genre
 
@@ -12,22 +13,25 @@ class ReviewSerializer(serializers.ModelSerializer):
         slug_field='username',
         read_only=True
     )
+    # title = serializers.HiddenField()
 
     class Meta:
         model = Review
-        fields = ('id', 'text', 'author', 'score', 'pub_date')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Review.objects.all(),
-                fields=['title', 'author'],
-                message='На одно произведение пользователь может оставить один отзыв!'
-            )
-        ]
-        read_only_fields = ('id', 'pub_date',)
+        fields = ('id', 'text', 'author', 'score', 'pub_date',)
+        # validators = [
+        #     UniqueTogetherValidator(
+        #         queryset=Review.objects.all(),
+        #         fields=['title_id', 'author'],
+        #         message='На одно произведение пользователь может оставить один отзыв!'
+        #     )
+        # ]
+        read_only_fields = ('pub_date',)
 
     # def validate(self, data):
+    #     # author = self.context['request'].user
+    #     # title = self.context['request'].title_id
     #     if Review.objects.filter(
-    #         author=data['author'], title=data['title']
+    #         author_username=data['author'], title=data['title']
     #     ).exists():
     #         raise serializers.ValidationError(
     #             'На одно произведение пользователь может оставить один отзыв!'
@@ -46,7 +50,7 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')
-        read_only_fields = ('id', 'pub_date',)
+        read_only_fields = ('pub_date',)
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -79,7 +83,14 @@ class TitlesSerializer(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(
         slug_field='slug', queryset=Category.objects.all()
     )
+    # category = CategorySerializer()
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
         fields = '__all__'
+
+    def get_rating(self, obj):
+        return Title.objects.get(name=obj.name).reviews.aggregate(
+            rating=Avg("score")
+        )['rating']
