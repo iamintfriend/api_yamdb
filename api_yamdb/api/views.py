@@ -7,7 +7,7 @@ from api.permissions import IsOwnerStaffEditAuthPostOrReadOnly, IsStaffOrReadOnl
 # from django.db.models import Avg
 
 from reviews.models import Review, Title, Category, Genre
-from .serializers import CommentSerializer, ReviewSerializer, CategorySerializer, GenreSerializer, TitlesSerializer
+from .serializers import CommentSerializer, ReviewSerializer, CategorySerializer, GenreSerializer, TitlesSerializer, TitlesReadSerializer
 from api.mixins import CustomViewSet
 
 
@@ -71,6 +71,7 @@ class GenreViewSet(CustomViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ("name",)
     lookup_field = "slug"
+    # filterset_fileds = ('slug',)
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
@@ -78,5 +79,33 @@ class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitlesSerializer
     permission_classes = (IsStaffOrReadOnly,)
-    filter_backends = [DjangoFilterBackend, ]
+    filter_backends = (DjangoFilterBackend,)
     pagination_class = PageNumberPagination
+    filterset_fields = ('name', 'year')
+
+    def get_queryset(self):
+        queryset = Title.objects.all()
+
+        category = self.request.query_params.get('category')
+        if category is not None:
+            queryset = queryset.filter(category__slug=category)
+
+        genre = self.request.query_params.get('genre')
+        if genre is not None:
+            queryset = queryset.filter(genre__slug=genre)
+
+        name = self.request.query_params.get('name')
+        if name is not None:
+            queryset = queryset.filter(name=name)
+
+        year = self.request.query_params.get('year')
+        if year is not None:
+            queryset = queryset.filter(year=year)
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return TitlesReadSerializer
+
+        return TitlesSerializer
