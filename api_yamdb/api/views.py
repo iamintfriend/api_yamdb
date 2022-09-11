@@ -79,9 +79,9 @@ class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitlesSerializer
     permission_classes = (IsStaffOrReadOnly,)
-    filter_backends = (DjangoFilterBackend,)
+    # filter_backends = (DjangoFilterBackend,)
     pagination_class = PageNumberPagination
-    filterset_fields = ('name', 'year')
+    # filterset_fields = ('name', 'year')
 
     def get_queryset(self):
         queryset = Title.objects.all()
@@ -96,7 +96,7 @@ class TitlesViewSet(viewsets.ModelViewSet):
 
         name = self.request.query_params.get('name')
         if name is not None:
-            queryset = queryset.filter(name=name)
+            queryset = queryset.filter(name__icontains=name)
 
         year = self.request.query_params.get('year')
         if year is not None:
