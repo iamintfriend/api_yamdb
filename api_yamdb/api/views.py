@@ -5,7 +5,6 @@ from rest_framework.pagination import (LimitOffsetPagination,
                                        PageNumberPagination)
 from rest_framework.response import Response
 from rest_framework.views import APIView
-# from django.db.models import Avg
 from rest_framework_simplejwt.tokens import RefreshToken
 from reviews.models import Category, Genre, Review, Title
 
@@ -98,12 +97,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return self.get_title().reviews.all()
 
     def perform_create(self, serializer):
-        # if Review.objects.filter(
-        #     author=self.request.user,
-        #     title=self.get_title()
-        # ).exists:
-        #     return Response(serializer.errors,
-        # status=status.HTTP_400_BAD_REQUEST)
         serializer.save(
             author=self.request.user, title=self.get_title()
         )
@@ -146,7 +139,6 @@ class GenreViewSet(CustomViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ("name",)
     lookup_field = "slug"
-    # filterset_fileds = ('slug',)
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
@@ -154,29 +146,42 @@ class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitlesSerializer
     permission_classes = (IsStaffOrReadOnly,)
-    # filter_backends = (DjangoFilterBackend,)
     pagination_class = PageNumberPagination
-    # filterset_fields = ('name', 'year')
 
     def get_queryset(self):
         queryset = Title.objects.all()
 
-        category = self.request.query_params.get('category')
-        if category is not None:
-            queryset = queryset.filter(category__slug=category)
+        # category = self.request.query_params.get('category')
+        # if category is not None:
+        #     queryset = queryset.filter(category__slug=category)
 
-        genre = self.request.query_params.get('genre')
-        if genre is not None:
-            queryset = queryset.filter(genre__slug=genre)
+        # genre = self.request.query_params.get('genre')
+        # if genre is not None:
+        #     queryset = queryset.filter(genre__slug=genre)
 
-        name = self.request.query_params.get('name')
-        if name is not None:
-            queryset = queryset.filter(name__icontains=name)
+        # name = self.request.query_params.get('name')
+        # if name is not None:
+        #     queryset = queryset.filter(name__icontains=name)
+
+        # year = self.request.query_params.get('year')
+        # if year is not None:
+        #     queryset = queryset.filter(year=year)
 
         year = self.request.query_params.get('year')
-        if year is not None:
-            queryset = queryset.filter(year=year)
+        name = self.request.query_params.get('name')
+        genre = self.request.query_params.get('genre')
+        category = self.request.query_params.get('category')
 
+        queryset_filters = {
+            category: queryset.filter(category__slug=category),
+            genre: queryset.filter(genre__slug=genre),
+            name: queryset.filter(name=name),
+            year: queryset.filter(year=year),
+        }
+
+        for field, filter in queryset_filters.items():
+            if field is not None:
+                queryset = filter
         return queryset
 
     def get_serializer_class(self):

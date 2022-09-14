@@ -7,4 +7,5 @@ class CustomViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
+    """Кастомный миксин с предустановленными методами"""
     pass

@@ -114,19 +114,10 @@ class ReviewSerializer(serializers.ModelSerializer):
         slug_field='username',
         read_only=True
     )
-    # title = serializers.HiddenField()
 
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date',)
-        # validators = [
-        #     UniqueTogetherValidator(
-        #         queryset=Review.objects.all(),
-        #         fields=['title_id', 'author'],
-        #         message='На одно произведение
-        # пользователь может оставить один отзыв!'
-        #     )
-        # ]
         read_only_fields = ('pub_date',)
 
     def validate(self, data):
@@ -134,13 +125,15 @@ class ReviewSerializer(serializers.ModelSerializer):
         author = request.user
         title_id = self.context['view'].kwargs.get('title_id')
         title = get_object_or_404(Title, pk=title_id)
-        if request.method == 'POST':
-            if Review.objects.filter(title=title, author=author).exists():
-                raise serializers.ValidationError(
-                    'На одно произведение пользователь'
-                    'может оставить один отзыв!'
-                )
-        return data
+        if request.method == 'POST' and Review.objects.filter(
+            title=title, author=author
+        ).exists():
+            raise serializers.ValidationError(
+                'На одно произведение пользователь'
+                'может оставить один отзыв!'
+            )
+        else:
+            return data
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -187,7 +180,6 @@ class TitlesSerializer(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(
         slug_field='slug', queryset=Category.objects.all()
     )
-    # category = CategorySerializer()
     rating = serializers.SerializerMethodField()
 
     class Meta:
@@ -201,8 +193,6 @@ class TitlesSerializer(serializers.ModelSerializer):
 
 
 class TitlesReadSerializer(serializers.ModelSerializer):
-    # genre = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    # category = serializers.StringRelatedField(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
     category = CategorySerializer(read_only=True)
     rating = serializers.SerializerMethodField()

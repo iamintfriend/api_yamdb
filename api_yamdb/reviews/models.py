@@ -1,7 +1,7 @@
 from django.db import models
 from users.models import User
 
-from .utils import year_validation
+from .validators import score_validation, year_validation
 
 SCORE_CHOICES = [
     (1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5'),
@@ -21,13 +21,13 @@ class Category(models.Model):
         unique=True
     )
 
-    def __str__(self):
-        return self.name
-
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
         ordering = ['name']
+
+    def __str__(self):
+        return self.name
 
 
 class Genre(models.Model):
@@ -41,6 +41,11 @@ class Genre(models.Model):
         max_length=50,
         unique=True
     )
+
+    class Meta:
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -73,11 +78,6 @@ class Title(models.Model):
         related_name='titles',
         null=True
     )
-    # rating = models.IntegerField(
-    #     verbose_name='Рейтинг',
-    #     null=True,
-    #     default=None
-    # )
 
     class Meta:
         ordering = ('name',)
@@ -87,7 +87,7 @@ class Title(models.Model):
 
 
 class GenreTitle(models.Model):
-    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    genre = models.ForeignKey(Genre, on_delete=models.SET_NULL)
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -113,10 +113,13 @@ class Review(models.Model):
     pub_date = models.DateTimeField(
         'дата публикации', auto_now_add=True
     )
-    score = models.IntegerField(choices=SCORE_CHOICES)
+    score = models.PositiveSmallIntegerField(
+        choices=SCORE_CHOICES,
+        validators=[score_validation]
+    )
 
     class Meta:
-        ordering = ('-pub_date',)  # Пока такое упорядочивание
+        ordering = ('-pub_date',)
         verbose_name = 'отзыв'
         verbose_name_plural = 'отзывы'
         constraints = [
@@ -124,10 +127,9 @@ class Review(models.Model):
                 fields=['title', 'author'], name='unique review'
             )
         ]
-        # unique_together = ['title', 'author']
 
     def __str__(self):
-        return self.text[:15]
+        return self.text
 
 
 class Comment(models.Model):
@@ -156,4 +158,4 @@ class Comment(models.Model):
         verbose_name_plural = 'комментарии'
 
     def __str__(self):
-        return self.text[:15]
+        return f'{self.author} {self.pub_date} {self.text}'
