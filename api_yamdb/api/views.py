@@ -17,8 +17,8 @@ from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, NewUserSerializer,
                              ReviewSerializer, TitlesReadSerializer,
                              TitlesSerializer, TokenRequestSerializer, User,
-                             UserInfoSerializer, UserSerializer,
-                             conf_code_generator)
+                             UserInfoSerializer, UserSerializer)
+from users.utils import conf_code_generator
 
 
 class RegisterUserView(generics.CreateAPIView):
@@ -40,24 +40,26 @@ class ObtainTokenView(APIView):
 
     def post(self, request, format=None):
         serializer = TokenRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if serializer.is_valid():
             user = get_object_or_404(
                 User, username=serializer.data['username'],
             )
             conf_code = serializer.data['confirmation_code']
 
-            if conf_code_generator.check_token(user, conf_code):
-                token = str(RefreshToken.for_user(user).access_token)
+        if conf_code_generator.check_token(user, conf_code):
+            token = str(RefreshToken.for_user(user).access_token)
 
-                return Response({'access': token})
-            else:
+            return Response({'access': token})
 
-                return Response(
-                    {'denied': 'Указан неверный код.'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {'denied': 'Указан неверный код.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class UserManagementViewSet(viewsets.ModelViewSet):

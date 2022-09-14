@@ -1,15 +1,16 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import send_mail
 from django.core.validators import validate_slug
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
+
+from users.utils import conf_code_generator
 from reviews.models import Category, Comment, Genre, Review, Title
 
+
 User = User = get_user_model()
-conf_code_generator = PasswordResetTokenGenerator()
 
 
 class NewUserSerializer(serializers.ModelSerializer):
@@ -77,8 +78,12 @@ class NewUserSerializer(serializers.ModelSerializer):
 class TokenRequestSerializer(serializers.Serializer):
     """Сериализатор обработки данных для получения токена."""
 
-    username = serializers.CharField(allow_blank=False)
-    confirmation_code = serializers.CharField(allow_blank=False)
+    username = serializers.CharField(
+        allow_blank=False, validators=[validate_slug, ]
+    )
+    confirmation_code = serializers.CharField(
+        allow_blank=False, validators=[validate_slug, ]
+    )
 
 
 class UserSerializer(serializers.ModelSerializer):
