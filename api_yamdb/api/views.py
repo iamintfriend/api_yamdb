@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from reviews.models import Category, Genre, Review, Title
 
+from api.filters import TitleFilter
 from api.mixins import CustomViewSet
 from api.permissions import (IsAdminOrSuperuser,
                              IsOwnerStaffEditAuthPostOrReadOnly,
@@ -147,42 +148,8 @@ class TitlesViewSet(viewsets.ModelViewSet):
     serializer_class = TitlesSerializer
     permission_classes = (IsStaffOrReadOnly,)
     pagination_class = PageNumberPagination
-
-    def get_queryset(self):
-        queryset = Title.objects.all()
-
-        # category = self.request.query_params.get('category')
-        # if category is not None:
-        #     queryset = queryset.filter(category__slug=category)
-
-        # genre = self.request.query_params.get('genre')
-        # if genre is not None:
-        #     queryset = queryset.filter(genre__slug=genre)
-
-        # name = self.request.query_params.get('name')
-        # if name is not None:
-        #     queryset = queryset.filter(name__icontains=name)
-
-        # year = self.request.query_params.get('year')
-        # if year is not None:
-        #     queryset = queryset.filter(year=year)
-
-        year = self.request.query_params.get('year')
-        name = self.request.query_params.get('name')
-        genre = self.request.query_params.get('genre')
-        category = self.request.query_params.get('category')
-
-        queryset_filters = {
-            category: queryset.filter(category__slug=category),
-            genre: queryset.filter(genre__slug=genre),
-            name: queryset.filter(name=name),
-            year: queryset.filter(year=year),
-        }
-
-        for field, filter in queryset_filters.items():
-            if field is not None:
-                queryset = filter
-        return queryset
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = TitleFilter
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
