@@ -131,5 +131,4 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# время действия для confirmation_code
-PASSWORD_RESET_TIMEOUT_DAYS = 10
+CONFIRMATION_CODE_TIMEOUT_DAYS = 10
