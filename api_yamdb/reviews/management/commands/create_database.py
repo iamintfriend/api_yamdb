@@ -18,8 +18,7 @@ class Command(BaseCommand):
                     username=self.username,
                     email=self.email,
                     role=self.role
-                ) 
-
+                )
 
         with open('static/data/category.csv') as f:
             reader = csv.DictReader(f)
