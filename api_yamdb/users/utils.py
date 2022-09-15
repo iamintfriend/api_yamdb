@@ -30,8 +30,8 @@ class ConfirmationCodeGen(PasswordResetTokenGenerator):
                 self._make_token_with_timestamp(user, ts), token):
             return False
 
-        if ((self._num_days(self._today()) - ts) >
-                settings.CONFIRMATION_CODE_TIMEOUT_DAYS):
+        if ((self._num_days(self._today()) - ts)
+            > settings.CONFIRMATION_CODE_TIMEOUT_DAYS):
             return False
 
         return True
