@@ -26,19 +26,13 @@ class IsStaffOrReadOnly(permissions.BasePermission):
         )
 
 
-class IsOwnerStaffEditAuthPostOrReadOnly(permissions.BasePermission):
+class IsOwnerStaffEditAuthPost(permissions.BasePermission):
     """
     Автору объекта, админу, модератору, СП можно редактировать.
     Залогиненому пользователю можно делать POST запрос.
     Анониму только смотреть.
     Используется для моделей Reviews и Comments.
     """
-
-    def has_permission(self, request, view):
-        return (
-            request.method in permissions.SAFE_METHODS
-            or request.user.is_authenticated
-        )
 
     def has_object_permission(self, request, view, obj):
         return (

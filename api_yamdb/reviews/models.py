@@ -1,12 +1,8 @@
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 from users.models import User
 
-from .validators import score_validation, year_validation
-
-SCORE_CHOICES = [
-    (1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5'),
-    (6, '6'), (7, '7'), (8, '8'), (9, '9'), (10, '10'),
-]
+from .validators import year_validation
 
 
 class Category(models.Model):
@@ -87,7 +83,7 @@ class Title(models.Model):
 
 
 class GenreTitle(models.Model):
-    genre = models.ForeignKey(Genre, on_delete=models.SET_NULL)
+    genre = models.ForeignKey(Genre, null=True, on_delete=models.SET_NULL)
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -114,8 +110,10 @@ class Review(models.Model):
         'дата публикации', auto_now_add=True
     )
     score = models.PositiveSmallIntegerField(
-        choices=SCORE_CHOICES,
-        validators=[score_validation]
+        validators=[
+            MinValueValidator(1, 'Допустимы значения от 1 до 10'),
+            MaxValueValidator(10, 'Допустимы значения от 1 до 10'),
+        ]
     )
 
     class Meta:

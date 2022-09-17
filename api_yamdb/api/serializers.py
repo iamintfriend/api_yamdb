@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.core.validators import validate_slug
-from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
@@ -43,12 +42,11 @@ class NewUserSerializer(serializers.ModelSerializer):
             username=data['username']).exists()
         email_exists = User.objects.filter(email=data['email']).exists()
 
-        if username_exists is email_exists:
-            return data
-        else:
+        if username_exists is not email_exists:
             raise serializers.ValidationError(
                 'Пользователь с таким именем или почтой уже существует!'
             )
+        return data
 
     def create(self, validated_data):
         """
@@ -180,28 +178,17 @@ class TitlesSerializer(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(
         slug_field='slug', queryset=Category.objects.all()
     )
-    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
         fields = '__all__'
-
-    def get_rating(self, obj):
-        return Title.objects.get(name=obj.name).reviews.aggregate(
-            rating=Avg("score")
-        )['rating']
 
 
 class TitlesReadSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(read_only=True, many=True)
     category = CategorySerializer(read_only=True)
-    rating = serializers.SerializerMethodField()
+    rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Title
         fields = '__all__'
-
-    def get_rating(self, obj):
-        return Title.objects.get(name=obj.name).reviews.aggregate(
-            rating=Avg("score")
-        )['rating']

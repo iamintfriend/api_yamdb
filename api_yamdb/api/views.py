@@ -1,8 +1,11 @@
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, generics, permissions, status, viewsets
+from rest_framework import filters, generics, status, viewsets
 from rest_framework.pagination import (LimitOffsetPagination,
                                        PageNumberPagination)
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -11,7 +14,7 @@ from reviews.models import Category, Genre, Review, Title
 from api.filters import TitleFilter
 from api.mixins import CustomViewSet
 from api.permissions import (IsAdminOrSuperuser,
-                             IsOwnerStaffEditAuthPostOrReadOnly,
+                             IsOwnerStaffEditAuthPost,
                              IsStaffOrReadOnly)
 from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, NewUserSerializer,
@@ -44,12 +47,10 @@ class ObtainTokenView(APIView):
             return Response(
                 serializer.errors, status=status.HTTP_400_BAD_REQUEST,
             )
-
-        if serializer.is_valid():
-            user = get_object_or_404(
-                User, username=serializer.data['username'],
-            )
-            conf_code = serializer.data['confirmation_code']
+        user = get_object_or_404(
+            User, username=serializer.data['username'],
+        )
+        conf_code = serializer.data['confirmation_code']
 
         if conf_code_generator.check_token(user, conf_code):
             token = str(RefreshToken.for_user(user).access_token)
@@ -79,7 +80,7 @@ class CurrentUserView(generics.RetrieveUpdateAPIView):
 
     queryset = User.objects.all()
     serializer_class = UserInfoSerializer
-    permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (IsAuthenticated, )
 
     def get_object(self):
         return self.request.user
@@ -88,7 +89,7 @@ class CurrentUserView(generics.RetrieveUpdateAPIView):
 class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет для модели Review."""
     serializer_class = ReviewSerializer
-    permission_classes = (IsOwnerStaffEditAuthPostOrReadOnly, )
+    permission_classes = [IsOwnerStaffEditAuthPost & IsAuthenticatedOrReadOnly]
     pagination_class = PageNumberPagination
 
     def get_title(self):
@@ -106,7 +107,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     """Вьюсет для модели Comment."""
     serializer_class = CommentSerializer
-    permission_classes = (IsOwnerStaffEditAuthPostOrReadOnly,)
+    permission_classes = [IsOwnerStaffEditAuthPost & IsAuthenticatedOrReadOnly]
     pagination_class = PageNumberPagination
 
     def get_review(self):
@@ -144,7 +145,9 @@ class GenreViewSet(CustomViewSet):
 
 class TitlesViewSet(viewsets.ModelViewSet):
     """Вьюсет для модели Title."""
-    queryset = Title.objects.all()
+    queryset = Title.objects.all().annotate(
+        rating=Avg("reviews__score")
+    ).order_by('name')
     serializer_class = TitlesSerializer
     permission_classes = (IsStaffOrReadOnly,)
     pagination_class = PageNumberPagination
