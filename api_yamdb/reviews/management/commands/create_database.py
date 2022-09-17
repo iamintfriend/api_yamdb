@@ -1,17 +1,9 @@
 import csv
-import logging
 
 from django.core.management.base import BaseCommand
 
 from reviews.models import Category, Comment, Genre, GenreTitle, Review, Title
 from users.models import User
-
-logger = logging.getLogger(__name__)
-handler = logging.StreamHandler()
-formatter = logging.Formatter('[%(levelname)s] - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.setLevel(logging.WARNING)
 
 
 files = [
@@ -53,35 +45,15 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options):
-        created = 0
-        skip = 0
-        err = 0
         for file in files:
             with open(file['path']) as f:
                 reader = csv.DictReader(f)
-                for row in reader:
-                    id = row['id']
-                    model = file['model']
-                    if model.objects.filter(id=id).exists():
-                        logger.info(
-                            f'{model.__name__} id {id} уже существует.'
-                            'Пропускаем >'
-                        )
-                        skip += 1
-                        continue
-                    try:
-                        payload = get_payload(row)
-                        entry = model.objects.create(**payload)
-                    except Exception as exc:
-                        logger.warning(
-                            f'Ошибка при создании записи {model.__name__} id '
-                            f'{id}. {type(exc).__name__}: {exc}. Пропускаем >'
-                        )
-                        err += 1
-                    else:
-                        logger.info(f'Запись {entry} успешно создана.')
-                        created += 1
-        print(
-            '\nИмпорт данных закончен:\n'
-            f'Создано: {created} Пропущено: {skip} Ошибок: {err}'
-        )
+                model = file['model']
+                try:
+                    bulk = [model(**get_payload(row)) for row in reader]
+                    model.objects.bulk_create(bulk)
+                except Exception as exc:
+                    print(
+                        f'Ошибка при иморте: {type(exc).__name__} {exc}'
+                    )
+        print('Импорт данных закончен')
