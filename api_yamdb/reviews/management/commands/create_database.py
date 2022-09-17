@@ -1,71 +1,45 @@
 import csv
-from django.core.management.base import BaseCommand
 import logging
-from reviews.models import Category, Title, Genre, GenreTitle, Review, Comment
-from users.models import User
 
+from django.core.management.base import BaseCommand
+
+from reviews.models import Category, Comment, Genre, GenreTitle, Review, Title
+from users.models import User
 
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - [%(levelname)s] - %(message)s')
+formatter = logging.Formatter('[%(levelname)s] - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 
 
 files = [
-    {
-        'model': User,
-        'path': 'static/data/users.csv',
-        'fields': ['username', 'email', 'role'],
-    },
-    {
-        'model': Category,
-        'path': 'static/data/category.csv',
-        'fields': ['name', 'slug'],
-    },
-    {
-        'model': Genre,
-        'path': 'static/data/genre.csv',
-        'fields': ['name', 'slug'],
-    },
-    {
-        'model': Title,
-        'path': 'static/data/titles.csv',
-        'fields': ['name', 'year'],
-    },
-    {
-        'model': GenreTitle,
-        'path': 'static/data/genre_title.csv',
-        'fields': ['title_id', 'genre_id'],
-    },
-    {
-        'model': Review,
-        'path': 'static/data/review.csv',
-        'fields': ['title_id', 'text', 'author', 'pub_date', 'score'],
-    },
-    {
-        'model': Comment,
-        'path': 'static/data/comments.csv',
-        'fields': ['review_id', 'text', 'author', 'pub_date'],
-    },
+    {'model': User, 'path': 'static/data/users.csv'},
+    {'model': Category, 'path': 'static/data/category.csv'},
+    {'model': Genre, 'path': 'static/data/genre.csv'},
+    {'model': Title, 'path': 'static/data/titles.csv'},
+    {'model': GenreTitle, 'path': 'static/data/genre_title.csv'},
+    {'model': Review, 'path': 'static/data/review.csv'},
+    {'model': Comment, 'path': 'static/data/comments.csv'},
 ]
 
 
-def get_payload(row, fields):
+def get_payload(row):
     """
     Функция собирает словарь для создания новой записи в БД.
 
     Args:
         row: dict - Строка из csv в виде словаря.
-        fields: list - Список из полей в зависимости от модели.
     Returns:
         payload: dict - Словать с названиями полей и их значениями.
     """
     payload = dict()
-    for field in fields:
+    for field in list(row.keys()):
         if field == 'author':
             payload[field] = User.objects.get(pk=row['author'])
+        elif field == 'category':
+            payload[field] = Category.objects.get(pk=row['category'])
         else:
             payload[field] = row[field]
 
@@ -73,6 +47,11 @@ def get_payload(row, fields):
 
 
 class Command(BaseCommand):
+    """
+    Комманда для импорта данных в БД из .csv файла.
+    Путь к файлу и соответствующая модель береться из переменной files.
+    """
+
     def handle(self, *args, **options):
         created = 0
         skip = 0
@@ -85,22 +64,24 @@ class Command(BaseCommand):
                     model = file['model']
                     if model.objects.filter(id=id).exists():
                         logger.info(
-                            f'{model.__name__} id {id} уже существует'
-                            'и пропущен.'
+                            f'{model.__name__} id {id} уже существует.'
+                            'Пропускаем >'
                         )
                         skip += 1
                         continue
                     try:
-                        payload = get_payload(row, file['fields'])
-                        entry = model.objects.create(pk=id, **payload)
+                        payload = get_payload(row)
+                        entry = model.objects.create(**payload)
                     except Exception as exc:
                         logger.warning(
-                            f'Ошибка при создании записи {model.__name__} id'
-                            f'{id} - {type(exc).__name__}: {exc}. Перехожу к'
-                            'следующей записи.'
+                            f'Ошибка при создании записи {model.__name__} id '
+                            f'{id}. {type(exc).__name__}: {exc}. Пропускаем >'
                         )
                         err += 1
                     else:
                         logger.info(f'Запись {entry} успешно создана.')
                         created += 1
-        print(f'Создано: {created} Пропущено: {skip} Ошибок: {err}')
+        print(
+            '\nИмпорт данных закончен:\n'
+            f'Создано: {created} Пропущено: {skip} Ошибок: {err}'
+        )
